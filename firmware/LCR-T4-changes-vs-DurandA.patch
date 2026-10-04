@@ -1,0 +1,1036 @@
+diff --git a/ADC.c b/ADC.c
+index c3aeae1..9d57486 100644
+--- a/ADC.c
++++ b/ADC.c
+@@ -3,7 +3,7 @@
+  *   ADC functions
+  *
+  *   (c) 2012-2020 by Markus Reschke
+- *   based on code from Markus Frejek and Karl-Heinz Kübbeler
++ *   based on code from Markus Frejek and Karl-Heinz Kï¿½bbeler
+  *
+  * ************************************************************************ */
+ 
+@@ -91,7 +91,7 @@ sample:
+     /* wait some time for voltage stabilization */
+     #ifndef ADC_LARGE_BUFFER_CAP
+       /* buffer cap: 1nF or none at all */
+-      wait100us();                   /* 100µs */
++      wait100us();                   /* 100ï¿½s */
+     #else
+       /* buffer cap: 100nF */
+       wait10ms();                    /* 10ms */
+@@ -128,7 +128,7 @@ sample:
+     /* auto-switch voltage reference for low readings */
+     if (Counter == 4)                   /* 5 samples */
+     {
+-      if ((uint16_t)Value < 1024)       /* < 1V (5V / 5 samples) */
++      if ((uint16_t)Value < ADC_DIV)    /* < 1V (5V / 5 samples) */
+       {
+         if (Ref != ADC_REF_BANDGAP)     /* bandgap ref not selected */
+         {
+@@ -165,7 +165,7 @@ sample:
+   /* convert to voltage; */
+   Value *= U;                      /* ADC readings * U_ref */
+ //  Value += 511 * Cfg.Samples;      /* automagic rounding */
+-  Value /= 1024;                   /* / 1024 for 10bit ADC */
++  Value /= ADC_DIV;                /* / 1024 (10 bit) or 4096 (12 bit) */
+ 
+   /* de-sample to get average voltage */
+   Value /= Cfg.Samples;
+diff --git a/cap.c b/cap.c
+index def6123..e1106ae 100644
+--- a/cap.c
++++ b/cap.c
+@@ -3,7 +3,7 @@
+  *   capacitor measurements
+  *
+  *   (c) 2012-2020 by Markus Reschke
+- *   based on code from Markus Frejek and Karl-Heinz Kübbeler
++ *   based on code from Markus Frejek and Karl-Heinz Kï¿½bbeler
+  *
+  * ************************************************************************ */
+ 
+@@ -176,25 +176,25 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+    *    MCU cycles for 2.5 ADC clock cycles
+    *    - MCU cycles for waiting loop for completion of dummy conversion (4)
+    *    - MCU cycles for starting next conversion (2)
+-   *    - MCU cycles for fixed pre-delay of 10µs
++   *    - MCU cycles for fixed pre-delay of 10ï¿½s
+    *    - MCU cycles for enabling pulse (4)
+-   *    - MCU cycles for half-pulse (2µs)
++   *    - MCU cycles for half-pulse (2ï¿½s)
+    *
+    *  MCU     ADC      MCU cycles for        
+    *  clock   clock    2.5 ADC cycles  pre-delay   half-pulse  delay
+    *  ---------------------------------------------------------------
+-   *   8 MHz  125 kHz   160 (20µs)      80 (10µs)  16 (2µs)     54
+-   *                                               32 (4µs)     38
+-   *  16 MHz  125 kHz   320 (20µs)     160 (10µs)  32 (2µs)    118
+-   *                                               64 (4µs)     86
+-   *  20 MHz  156.25    320 (16µs)     200 (10µs)  40 (2µs)     70
+-   *                                               80 (4µs)     30
++   *   8 MHz  125 kHz   160 (20ï¿½s)      80 (10ï¿½s)  16 (2ï¿½s)     54
++   *                                               32 (4ï¿½s)     38
++   *  16 MHz  125 kHz   320 (20ï¿½s)     160 (10ï¿½s)  32 (2ï¿½s)    118
++   *                                               64 (4ï¿½s)     86
++   *  20 MHz  156.25    320 (16ï¿½s)     200 (10ï¿½s)  40 (2ï¿½s)     70
++   *                                               80 (4ï¿½s)     30
+    *  
+    *  Skipping the second half-pulse allows us to measure low value caps too.
+    */
+ 
+   /* delay for pulse */
+-  /* MCU cycles for one ADC cycle * 2.5 - MCU cycles for 10µs 
++  /* MCU cycles for one ADC cycle * 2.5 - MCU cycles for 10ï¿½s 
+      - MCU cycles for half-pulse - 10 */
+   U_1 = ((MCU_CYCLES_PER_ADC * 25) / 10) - (MCU_CYCLES_PER_US * 10)
+         - (MCU_CYCLES_PER_US * 2) - 10;
+@@ -277,7 +277,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+     /* real conversion */
+     ADCSRA = Bits;                 /* start conversion */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_1 = ADCW;                    /* save ADC value */
++    U_1 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -305,7 +305,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+ //    R_PORT = 0;                    /* set resistor port to low */
+     R_DDR = 0;                     /* set resistor port to HiZ */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_2 = ADCW;                    /* save ADC value */
++    U_2 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -324,7 +324,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+     /* real conversion */
+     ADCSRA = Bits;                 /* start conversion */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_3 = ADCW;                    /* save ADC value */
++    U_3 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -352,7 +352,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+ //    R_PORT = 0;                    /* set resistor port to low */
+     R_DDR = 0;                     /* set resistor port to HiZ */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_4 = ADCW;                    /* save ADC value */
++    U_4 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -413,7 +413,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+     }
+     else                      /* offset problem or zero */
+     {
+-      /* should only happen for large caps (>1000µF) */
++      /* should only happen for large caps (>1000ï¿½F) */
+       if (CmpValue(Cap->Value, Cap->Scale, 1000, -6) > 0)
+       {
+         ESR = 0;                   /* can't be less than 0 Ohms */
+@@ -535,7 +535,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+   uint32_t          Sum_2;         /* sum #2 */
+   uint32_t          Value;
+ 
+-  /* check for a capacitor >= 0.18µF */
++  /* check for a capacitor >= 0.18ï¿½F */
+   if ((Cap == NULL) ||
+       (CmpValue(Cap->Value, Cap->Scale, 180, -9) < 0)) return ESR;
+ 
+@@ -573,15 +573,15 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+    *    2.5 ADC clock cycles
+    *    - MCU cycles for waiting loop for completion of dummy conversion (4)
+    *    - MCU cycles for starting next conversion (2)
+-   *    - 5µs delay
++   *    - 5ï¿½s delay
+    *    - MCU cycles for enabling pulse (4)
+    *
+    *  That time is the first half of the puls. So we have to double the time
+-   *  for a full pulse. Half pulse for 8MHz MCU clock is about 13.5µs.
++   *  for a full pulse. Half pulse for 8MHz MCU clock is about 13.5ï¿½s.
+    */
+ 
+   /* delay for pulse */
+-  /* MCU cycles for one ADC cycle * 2.5 - MCU cycles for 5µs - 10 */
++  /* MCU cycles for one ADC cycle * 2.5 - MCU cycles for 5ï¿½s - 10 */
+   U_1 = ((MCU_CYCLES_PER_ADC * 25) / 10) - (MCU_CYCLES_PER_US * 5) - 10;
+   n = (uint8_t)U_1;
+ 
+@@ -632,7 +632,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+     /* real conversion */
+     ADCSRA = Bits;                 /* start conversion */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_1 = ADCW;                    /* save ADC value */
++    U_1 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -656,7 +656,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+     R_PORT = 0;                    /* set resistor port to low */
+     R_DDR = 0;                     /* set resistor port to HiZ */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_2 = ADCW;                    /* save ADC value */
++    U_2 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -695,7 +695,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+     /* real conversion */
+     ADCSRA = Bits;                 /* start conversion */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_3 = ADCW;                    /* save ADC value */
++    U_3 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -719,7 +719,7 @@ uint16_t MeasureESR(Capacitor_Type *Cap)
+     R_PORT = 0;                    /* set resistor port to low */
+     R_DDR = 0;                     /* set resistor port to HiZ */
+     while (ADCSRA & (1 << ADSC));  /* wait until conversion is done */
+-    U_4 = ADCW;                    /* save ADC value */
++    U_4 = ADC_RAW10;               /* save ADC value (10 bit) */
+ 
+ 
+     /*
+@@ -866,7 +866,7 @@ Small caps:
+ 
+ 
+ /*
+- *  measure cap >4.7µF between two probe pins
++ *  measure cap >4.7ï¿½F between two probe pins
+  *
+  *  requires:
+  *  - Cap: pointer to capacitor data structure 
+@@ -901,7 +901,7 @@ uint8_t LargeCap(Capacitor_Type *Cap)
+    *  DUT reaches 300mV. The charging is done via Rl. This method is
+    *  suitable for large capacitances from 47uF up to 100mF. If we find a 
+    *  lower capacitance we'll switch to 1ms charging pulses and try again
+-   *  (4.7µF up to 47µF).
++   *  (4.7ï¿½F up to 47ï¿½F).
+    *
+    *  Problem:
+    *  ReadADC() needs about 5ms (44 runs). We charge the DUT for 10ms and
+@@ -965,14 +965,14 @@ large_cap:
+   /* if 1300mV are reached with one pulse, we got a small cap */
+   if ((Pulses == 1) && (U_Cap > 1300))
+   {
+-    if (Mode & PULL_10MS)               /* 10ms pulses (>47µF) */
++    if (Mode & PULL_10MS)               /* 10ms pulses (>47ï¿½F) */
+     {
+-      Mode = PULL_1MS | PULL_UP;        /* set mode to 1ms charging pulses (<47µF) */
++      Mode = PULL_1MS | PULL_UP;        /* set mode to 1ms charging pulses (<47ï¿½F) */
+       goto large_cap;                   /* and re-run */
+     }
+-    else                                /* 1ms pulses (<47µF) */
++    else                                /* 1ms pulses (<47ï¿½F) */
+     {
+-      Flag = 2;                         /* signal low capacitance (<4.7µF) */
++      Flag = 2;                         /* signal low capacitance (<4.7ï¿½F) */
+     }
+   }
+ 
+@@ -1012,11 +1012,11 @@ large_cap:
+ 
+     U_Zero = ReadU(Probes.Ch_1);        /* get start voltage */
+ 
+-    if (Mode & PULL_10MS)     /* > 47µF */
++    if (Mode & PULL_10MS)     /* > 47ï¿½F */
+     {
+       wait1000ms();
+     }
+-    else                      /* < 47µF */
++    else                      /* < 47ï¿½F */
+     {
+       wait100ms();
+     }
+@@ -1064,11 +1064,11 @@ large_cap:
+      */
+ 
+     Value *= 1000;                        /* scale for 0.1% resolution */
+-    if (Mode & PULL_10MS)          /* cap >47µF */
++    if (Mode & PULL_10MS)          /* cap >47ï¿½F */
+     {
+       Value /= (1000 - CAP_FACTOR_LARGE);    /* apply factor (in 0.1%) */
+     }
+-    else                           /* cap 4.7-47µF */
++    else                           /* cap 4.7-47ï¿½F */
+     {
+       Value /= (1000 - CAP_FACTOR_MID);      /* apply factor (in 0.1%) */
+     }
+@@ -1076,10 +1076,10 @@ large_cap:
+     /* copy data */
+     Cap->A = Probes.ID_2;     /* pull-down probe pin */
+     Cap->B = Probes.ID_1;     /* pull-up probe pin */
+-    Cap->Scale = Scale;       /* -9 (nF) or -6 (µF) */
++    Cap->Scale = Scale;       /* -9 (nF) or -6 (ï¿½F) */
+     Cap->Raw = Raw;           /* uncompensated value */
+     Cap->Value = Value;       /* compensated value */
+-                              /* max. 4.3*10^6nF or 100*10^3µF */
++                              /* max. 4.3*10^6nF or 100*10^3ï¿½F */
+ 
+ 
+     /*
+@@ -1113,7 +1113,7 @@ large_cap:
+ 
+ 
+ /*
+- *  measure cap <4.7µF between two probe pins
++ *  measure cap <4.7ï¿½F between two probe pins
+  *
+  *  requires:
+  *  - Cap: pointer to capacitor data structure 
+@@ -1140,7 +1140,7 @@ uint8_t SmallCap(Capacitor_Type *Cap)
+ 
+ 
+   /*
+-   *  Measurement method used for small caps < 4.7uF (was 50µF):
++   *  Measurement method used for small caps < 4.7uF (was 50ï¿½F):
+    *  We need a much better resolution for the time measurement. Therefore we
+    *  use the MCUs internal 16-bit counter and analog comparator. The counter
+    *  inceases until the comparator detects that the voltage of the DUT is as
+@@ -1335,7 +1335,7 @@ uint8_t SmallCap(Capacitor_Type *Cap)
+ 
+     /*
+      *  Self-adjust the voltage offset of the analog comparator and internal
+-     *  bandgap reference if C is 100nF up to 20µF. The minimum of 100nF
++     *  bandgap reference if C is 100nF up to 20ï¿½F. The minimum of 100nF
+      *  should keep the voltage stable long enough for the measurements. 
+      *  Changed offsets will be used in next test run.
+      */
+@@ -1522,7 +1522,7 @@ void MeasureCap(uint8_t Probe1, uint8_t Probe2, uint8_t ID)
+     /* low resistance might be a large cap */
+     if (Check.Found == COMP_RESISTOR)
+     {
+-      /* report capacitor only for a large C (> 4.3µF) */
++      /* report capacitor only for a large C (> 4.3ï¿½F) */
+       if (Cap->Scale >= -6) Check.Found = COMP_CAPACITOR;
+     }
+ 
+@@ -1554,7 +1554,7 @@ void MeasureCap(uint8_t Probe1, uint8_t Probe2, uint8_t ID)
+ /*
+  *  use fixed reference cap to determine voltage offsets
+  *  - cap: 100nF - 1000nF
+- *  - based on method from SmallCap() for caps < 4.7µF
++ *  - based on method from SmallCap() for caps < 4.7ï¿½F
+  *
+  *  returns:
+  *  - 1 on success
+diff --git a/common.h b/common.h
+index 1a531cf..121ad7b 100644
+--- a/common.h
++++ b/common.h
+@@ -450,7 +450,7 @@ typedef struct
+   int8_t            CompOffset;    /* voltage offset of analog comparator (mV) */
+   uint8_t           Contrast;      /* contrast value of display */
+   uint8_t           CheckSum;      /* checksum for stored values */
+-} Adjust_Type;
++} __attribute__((packed)) Adjust_Type;
+ 
+ 
+ /* touch screen adjustment values (stored in EEPROM) */
+diff --git a/config.h b/config.h
+index fd1d625..ace98e3 100644
+--- a/config.h
++++ b/config.h
+@@ -646,7 +646,7 @@
+  *  - uncomment to enable
+  */
+ 
+-//#define UI_AUTOHOLD
++#define UI_AUTOHOLD                /* LCR-T4: keep the result until the button is pressed */
+ 
+ 
+ /*
+@@ -724,7 +724,7 @@
+  *  - uncomment to enable, also adjust timeout (in s)
+  */
+ 
+-//#define POWER_OFF_TIMEOUT     60
++#define POWER_OFF_TIMEOUT     60   /* LCR-T4: auto power-off after 60 s idle */
+ 
+ 
+ /*
+@@ -772,8 +772,8 @@
+  *  - uncomment one
+  */ 
+ 
+-#define DATA_EEPROM           /* store data in EEPROM */
+-//#define DATA_FLASH            /* store data in Flash */
++//#define DATA_EEPROM           /* store data in EEPROM */
++#define DATA_FLASH            /* store data in Flash (LGT: EEPROM is emulated, flash-only image) */
+ 
+ 
+ 
+@@ -1167,13 +1167,19 @@
+   #define ADC_FREQ    125000
+ #endif
+ #ifdef __LGT8FX8P__
+-  #if CPU_FREQ == 20000000
+-    /* 20MHz MCU clock */
+-    #define ADC_FREQ    312500
+-  #else
+-    /* all other MCU clocks */
+-    #define ADC_FREQ    500000
+-  #endif
++  /* LGT port (from CompuKit TC1 v19.15): keep the original m-firmware
++     timing at 125 kHz. The 500 kHz experimental LGT setting makes the ESR
++     pulse delay negative at 16 MHz. */
++  #undef ADC_FREQ
++  #define ADC_FREQ    125000
++#endif
++
++/* ADC resolution (12 bit LGT8F328P overrides these in its config file) */
++#ifndef ADC_DIV
++  #define ADC_DIV     1024                /* full scale of 10 bit ADC */
++#endif
++#ifndef ADC_RAW10
++  #define ADC_RAW10   ADCW                /* raw reading in 10 bit */
+ #endif
+ 
+ /*
+diff --git a/config_lgt8f328p.h b/config_lgt8f328p.h
+index 6edc667..54faa1a 100644
+--- a/config_lgt8f328p.h
++++ b/config_lgt8f328p.h
+@@ -34,18 +34,36 @@
+ 
+ 
+ /*
+- *  VT100 serial terminal, TTL serial
++ *  LCR-T4 repair (LGT8F328P board, 2026-10-04):
++ *  0.96" SSD1306 OLED module GM009605, 4 pins, I2C (addr 0x3C), no /RES pin.
++ *  The broken ST7565 flex used PD0/PD1/PD2/PD4 (measured with a pin-finder
++ *  firmware). OLED wiring: SDA -> PD1 (flex pad 3), SCK -> PD2 (flex pad 5),
++ *  VDD -> ISP header VCC, GND -> ISP header GND. Bus pull-ups are on the OLED.
+  */
+ 
+-//#if 0
+-#define LCD_VT100                       /* pseudo display VT100 */
+-#define LCD_TEXT                        /* character display */
+-#define LCD_COLOR                       /* color display */
+-#define LCD_CHAR_X       40             /* characters per line */
+-#define LCD_CHAR_Y       24             /* number of lines */
+-#define SERIAL_BITBANG                  /* bit-bang serial */
+-//#define SERIAL_HARDWARE                 /* hardware serial */
+-//#endif
++#define LCD_SSD1306                     /* display controller SSD1306 */
++#define LCD_GRAPHIC                     /* graphic display */
++#define LCD_I2C                         /* I2C interface */
++#define LCD_I2C_ADDR     0x3c           /* SSD1306's I2C address */
++/* control lines */
++#define LCD_PORT         PORTD          /* port data register */
++#define LCD_DDR          DDRD           /* port data direction register */
++/* display settings */
++#define LCD_DOTS_X       128            /* number of horizontal dots */
++#define LCD_DOTS_Y       64             /* number of vertical dots */
++#define LCD_FLIP_X                      /* enable horizontal flip */
++#define LCD_FLIP_Y                      /* enable vertical flip */
++#define LCD_CONTRAST     127            /* default contrast (0-255) */
++/* font and symbols: vertically aligned & flipped, bank-wise grouping */
++#define FONT_8X8_VF                     /* 8x8 font */
++#define SYMBOLS_24X24_VFP               /* 24x24 symbols */
++/* I2C bus */
++#define I2C_BITBANG                     /* bit-bang I2C */
++#define I2C_PORT         PORTD          /* I2C port data register */
++#define I2C_DDR          DDRD           /* I2C port data direction register */
++#define I2C_PIN          PIND           /* I2C port input pins register */
++#define I2C_SDA          PD1            /* port pin used for SDA */
++#define I2C_SCL          PD2            /* port pin used for SCL */
+ 
+ 
+ 
+@@ -203,6 +221,41 @@
+ 
+ 
+ 
++/* LGT8F328P board-start registers (from CompuKit TC1 v19.15) */
++#ifndef LGT_PMCR
++#define LGT_PMCR   (*((volatile uint8_t *)0xF2))
++#define LGT_ECCR   (*((volatile uint8_t *)0x56))
++#endif
++
++/*
++ *  LGT8F328P analog comparator (databook v1.0.5, AC0 + DAC chapters):
++ *  C0SR.C0BG (= ACBG) does NOT select a bandgap. With C0XR.C0PS0 = 0 it
++ *  selects the internal 8-bit DAC output (DAO) as positive input. The DAC is
++ *  off after reset, so the comparator would trip at ~0V and small caps read
++ *  as a few 100pF. Run the DAC from the internal reference (1.024V via VCAL1)
++ *  at full scale: V_DAO = VREF * (DALR + 1) / 256 = 1.024V = LGT_IVREF.
++ */
++#define LGT_DACON  _SFR_MEM8(0xA0)
++#define LGT_DALR   _SFR_MEM8(0xA1)
++#define LGT_DACEN  3                    /* DACON: DAC enable */
++#define LGT_DAVS_IVREF  0x02            /* DACON: DAVS = 10, internal ref */
++
++/*
++ *  LGT8F328P ADC differs from ATmega328 (from CompuKit TC1 v19.15):
++ *  - 12 bit result (0-4095) instead of 10 bit
++ *  - REFS1:0 = 11 selects the internal 1.024V reference (not a 1.1V
++ *    bandgap); it's calibrated by copying VCAL1 into VCAL
++ *  - MUX channel 0x0e is AGND, so the reference can't be measured;
++ *    Cfg.Bandgap is set to LGT_IVREF instead
++ */
++#define ADC_DIV               4096           /* full scale of 12 bit ADC */
++#define ADC_RAW10             (ADCW >> 2)    /* raw reading scaled to 10 bit */
++#define LGT_IVREF             1024           /* internal reference (mV) */
++#define LGT_VCAL              _SFR_MEM8(0xC8)     /* reference calibration */
++#define LGT_VCAL1             _SFR_MEM8(0xCD)     /* factory value for 1.024V */
++
++
++
+ /* ************************************************************************
+  *   MCU specific setup to support different AVRs
+  * ************************************************************************ */
+diff --git a/main.c b/main.c
+index d195416..fe1a9ce 100644
+--- a/main.c
++++ b/main.c
+@@ -28,6 +28,28 @@
+ #include "colors.h"           /* color definitions */
+ 
+ 
++#ifdef __LGT8FX8P__
++/*
++ *  LGT8F328P cold-start watchdog patch (from CompuKit TC1 v19.15).
++ *  Disable a possibly active watchdog in .init3, before main().
++ *  avr-gcc executes .init3 code inline, so the function must be naked.
++ */
++void LGT_EarlyWDTInit(void)
++  __attribute__((naked, used, section(".init3")));
++void LGT_EarlyWDTInit(void)
++{
++  MCUSR = 0;
++  wdt_disable();
++}
++
++/* plain busy-wait for the cold-boot delay (from CompuKit TC1 v19.15) */
++static void LGT_ColdBootDelayMs(uint16_t ms)
++{
++  while (ms--) _delay_ms(1);
++}
++#endif
++
++
+ /*
+  *  local variables
+  */
+@@ -1714,10 +1736,17 @@ void CheckVoltageRefs(void)
+    *  internal 1.1V bandgap reference
+    */
+ 
++  #ifdef LGT_IVREF
++  /* LGT8F328P: factory calibrated internal 1.024V reference, which
++     can't be measured via the ADC (channel 0x0e is AGND) */
++  LGT_VCAL = LGT_VCAL1;                      /* load calibration for 1.024V */
++  Cfg.Bandgap = LGT_IVREF + NV.RefOffset;    /* reference voltage (mV) */
++  #else
+   Cfg.Bandgap = ReadU(ADC_CHAN_BANDGAP);     /* dummy read for bandgap stabilization */
+   Cfg.Samples = 200;                         /* perform 200 ADC samples for high accuracy */
+   Cfg.Bandgap = ReadU(ADC_CHAN_BANDGAP);     /* get voltage of bandgap reference (mV) */
+   Cfg.Bandgap += NV.RefOffset;               /* add voltage offset */
++  #endif
+ 
+   /* clean up */
+   Cfg.Samples = ADC_SAMPLES;            /* set ADC samples back to default */
+@@ -1912,6 +1941,39 @@ int main(void)
+   POWER_PORT = (1 << POWER_CTRL);       /* set pin to drive power management transistor */
+   #endif
+ 
++  #ifdef __LGT8FX8P__
++  /*
++   *  LGT8F328P startup (from CompuKit TC1 v19.15):
++   *  enable the emulated EEPROM and switch to the board's 16 MHz crystal.
++   *  The protected LGT registers require an 0x80 unlock write first.
++   */
++  LGT_ECCR = 0x80;
++  LGT_ECCR = 0x4c;                 /* 1 KB emulated EEPROM */
++
++  CLKPR = 0x80;
++  CLKPR = 0x01;                    /* safe temporary divide-by-2 */
++  asm volatile ("nop");
++  asm volatile ("nop");
++  LGT_PMCR = 0x80;
++  LGT_PMCR = 0x97;                 /* enable external crystal */
++  for (GPIOR0 = 0xff; GPIOR0 > 0; --GPIOR0);
++  for (GPIOR0 = 0xff; GPIOR0 > 0; --GPIOR0);
++  LGT_PMCR = 0x80;
++  LGT_PMCR = 0xb7;                 /* switch system clock to external crystal */
++  for (GPIOR0 = 0xff; GPIOR0 > 0; --GPIOR0);
++  for (GPIOR0 = 0xff; GPIOR0 > 0; --GPIOR0);
++  CLKPR = 0x80;
++  CLKPR = 0x00;                    /* 16 MHz / 1 */
++
++  /* comparator reference: DAC output = internal 1.024V (see config_lgt8f328p.h) */
++  LGT_VCAL = LGT_VCAL1;            /* calibration for the 1.024V reference */
++  LGT_DACON = (1 << LGT_DACEN) | LGT_DAVS_IVREF;
++  LGT_DALR = 255;                  /* full scale: V_DAO = VREF */
++
++  /* let the board and display rails settle on a true power-on */
++  LGT_ColdBootDelayMs(500);
++  #endif
++
+   /* set up MCU */
+   MCUCR = (1 << PUD);                   /* disable pull-up resistors globally */
+   ADCSRA = (1 << ADEN) | ADC_CLOCK_DIV; /* enable ADC and set clock divider */
+diff --git a/pause.c b/pause.c
+index fecb488..cece337 100644
+--- a/pause.c
++++ b/pause.c
+@@ -41,6 +41,20 @@
+ 
+ void MilliSleep(uint16_t Time)
+ {
++#ifdef __LGT8FX8P__
++  /*
++   * TC1/LGT8F328P: use a plain busy-wait instead of Timer2.
++   * The LCD-only cold-boot diagnostic proved this delay method works
++   * reliably from a true power-on. Reset the watchdog every millisecond
++   * so long UI delays (1.5-3 s) remain safe after the watchdog is enabled.
++   */
++  while (Time > 0)
++  {
++    wdt_reset();
++    _delay_ms(1);
++    Time--;
++  }
++#else
+   uint32_t               Cycles;        /* timer cycles */
+   uint8_t                Timeout;       /* compare value */
+   uint8_t                Flag = 0;      /* interrupt flag */
+@@ -48,143 +62,62 @@ void MilliSleep(uint16_t Time)
+   uint8_t                Mode;          /* sleep mode */
+   #endif
+ 
+-  /*
+-   *  calculate stuff
+-   */
+-
+-  /*
+-      Using timer prescaler of 1024 (maximum):
+-        MCU frequency  1MHz    8MHz   16MHz  20MHz
+-        timer cycle    1024µs  128µs  64µs   51.2µs
+-
+-      We don't compensate the binary to decimal offset and also not the time
+-      required for the processing loop, because it would make things much more
+-      complicated and we don't need exact timing here.
+-  */
+-
+   #ifdef SAVE_POWER
+   Mode = Cfg.SleepMode;                 /* get current sleep mode */
+   #endif
+ 
+-  /* calculate required timer cycles (prescaler 1024) */
+-  Cycles = Time;                        /* ms * 1024 -> µs */
+-  Cycles *= MCU_CYCLES_PER_US;          /* timer cycles based on MCU frequency */
++  Cycles = Time;
++  Cycles *= MCU_CYCLES_PER_US;
+ 
+   #ifdef SAVE_POWER
+-  if (Mode == SLEEP_MODE_PWR_SAVE)      /* power save mode */
++  if (Mode == SLEEP_MODE_PWR_SAVE)
+   {
+-    uint32_t        Value;
+-
+-    /*
+-     *  After returning from the power down or power save sleep modes the
+-     *  main oscillator needs following start-up times to stabilize:
+-     *  - crystal oscillator:                     16k cycles
+-     *  - low power crystal / ceramic resonator:  1k or 256 cycles
+-     *  - internal RC oscillator:                 6 cycles
+-     */
+-
+-    /* compensate oscillator start-up */
+-    Value = Cycles / 256;               /* calculate loop runs */
+-    Value++;                            /* fix offset by division */
+-    /* multiply with startup cycles equivalent to timer cycles */
+-    Value *= (OSC_STARTUP / 1024);      /* overhead cycles */
+-
+-    if (Cycles > Value)            /* we are able to compensate */
+-    {
+-      Cycles -= Value;                  /* subtract overhead cycles */
+-    }
+-    else                           /* no way to compensate */
+-    {
+-      /* idle mode doesn't require oscillator start-up after wake-up */
+-      /* just 6 cycles delay */ 
+-      Mode = SLEEP_MODE_IDLE;           /* change sleep mode to Idle */
+-    }
++    uint32_t Value;
++    Value = Cycles / 256;
++    Value++;
++    Value *= (OSC_STARTUP / 1024);
++    if (Cycles > Value) Cycles -= Value;
++    else Mode = SLEEP_MODE_IDLE;
+   }
+   #endif
+ 
+-
+-  /*
+-   *  set up timer
+-   */
+-
+-  TCCR2B = 0;                      /* stop timer */
+-  TCNT2 = 0;                       /* set counter to 0 */
+-  TCCR2A = (1 << WGM21);           /* set CTC mode */
+-  TIMSK2 = (1 << OCIE2A);          /* enable interrupt for OCR2A match */
++  TCCR2B = 0;
++  TCNT2 = 0;
++  TCCR2A = (1 << WGM21);
++  TIMSK2 = (1 << OCIE2A);
+ 
+   #ifdef SAVE_POWER
+-  set_sleep_mode(Mode);            /* set sleep mode */
++  set_sleep_mode(Mode);
+   #endif
+ 
+-  if (SREG & (1 << SREG_I))        /* if interrupts are already enabled */
+-  {
+-    Flag = 1;                      /* keep that in mind */
+-  }
+-  else                             /* otherwise */
+-  {
+-    sei();                         /* enable interrupts */
+-  }
+-
+-
+-  /*
+-   *  processing loop
+-   *  - sleep for several intervals until requested time is reached
+-   */
++  if (SREG & (1 << SREG_I)) Flag = 1;
++  else sei();
+ 
+   while (Cycles > 0)
+   {
+-    wdt_reset();              /* reset watchdog */
+-
+-    /*
+-     *  manage timeout
+-     */
+-
+-    if (Cycles > 255)         /* prevent 8 bit overflow */
+-    {
+-      Timeout = 255;          /* use maximum */
+-    }
+-    else                      /* within 8 bit range */
+-    {
+-      Timeout = (uint8_t)Cycles;
+-    }
+-
+-    Cycles -= Timeout;        /* update counter */
+-    Timeout--;                /* interrupt is triggered by cycle after match */
+-    /* todo: what happens if Timeout is 0? */
+-
+-    /* update timer */
+-    OCR2A = Timeout;               /* set compare value (timeout) */
+-
+-    /* start timer by setting clock prescaler to 1024 */
++    wdt_reset();
++    if (Cycles > 255) Timeout = 255;
++    else Timeout = (uint8_t)Cycles;
++    Cycles -= Timeout;
++    Timeout--;
++    OCR2A = Timeout;
+     TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);
+-
+-    /*
+-     *  sleep
+-     *  - since any interrupt would wake up the MCU we have to make sure
+-     *    that we track the right interrupt
+-     */
+-
+-    while (TCCR2B != 0)       /* as long as Timer2 is running */
++    while (TCCR2B != 0)
+     {
+       #ifdef SAVE_POWER
+-        /* enter sleep mode to save power */
+-        sleep_mode();              /* sleep (again) */
+-        /* woken up */
++      sleep_mode();
+       #else
+-        /* burn MCU cycles while waiting for Timer2 */
+-        asm volatile(
+-          "nop\n\t"
+-          "nop\n\t"
+-          ::
+-        );
++      asm volatile(
++        "nop\n\t"
++        "nop\n\t"
++        ::
++      );
+       #endif
+     }
+   }
+ 
+-  if (Flag == 0)              /* restore former interrupt setting */
+-  {
+-    cli();                    /* disable interrupts */
+-  }
++  if (Flag == 0) cli();
++#endif
+ }
+ 
+ 
+diff --git a/resistor.c b/resistor.c
+index 088a1ee..d1fb9e9 100644
+--- a/resistor.c
++++ b/resistor.c
+@@ -3,7 +3,7 @@
+  *   resistor measurements
+  *
+  *   (c) 2012-2020 by Markus Reschke
+- *   based on code from Markus Frejek and Karl-Heinz Kübbeler
++ *   based on code from Markus Frejek and Karl-Heinz Kï¿½bbeler
+  *
+  * ************************************************************************ */
+ 
+@@ -122,7 +122,7 @@ uint16_t SmallResistor(uint8_t ZeroFlag)
+ 
+     while (Counter < 100)
+     {
+-      /* get ADC reading (about 100µs) */
++      /* get ADC reading (about 100ï¿½s) */
+       ADCSRA |= (1 << ADSC);            /* start conversion */
+       while (ADCSRA & (1 << ADSC));     /* wait until conversion is done */
+       Value += ADCW;                    /* add ADC reading */
+@@ -134,7 +134,7 @@ uint16_t SmallResistor(uint8_t ZeroFlag)
+ 
+     /* convert ADC reading into voltage (sum of samples) */
+     Value *= Cfg.Bandgap;          /* * U_bandgap */
+-    Value /= 1024;                 /* / 1024 for 10bit ADC */
++    Value /= ADC_DIV;              /* / 1024 (10 bit) or 4096 (12 bit) */
+ 
+     /* loop control */
+     if (Mode & MODE_HIGH)          /* probe #1 / Rl */
+@@ -163,13 +163,13 @@ uint16_t SmallResistor(uint8_t ZeroFlag)
+     /* I = U/R = (5V - U_Rl)/(Rl + R_i_H) */
+     Value = 100UL * Cfg.Vcc;                 /* Vcc * number of samples */
+     Value -= Value1;                         /* - sum of U_Rl */
+-    Value *= 100;                            /* de-sample to 0.1 µV */
+-    Value /= ((R_LOW * 10) + NV.RiH);        /* I in µA */
++    Value *= 100;                            /* de-sample to 0.1 ï¿½V */
++    Value /= ((R_LOW * 10) + NV.RiH);        /* I in ï¿½A */
+ 
+     /* U = U_Rl - U_R_i_L = U_Rl - (R_i_L * I) */
+     /* U = U_probe1 - U_probe2 */
+     Value1 -= Value2;                        /* sums in mV */
+-    Value1 *= 1000;                          /* de-sample to 0.01 µV */  
++    Value1 *= 1000;                          /* de-sample to 0.01 ï¿½V */  
+ 
+     /* R = U/I (including R of probe leads) */
+     Value1 /= Value;                         /* in 0.01 Ohms */
+diff --git a/semi.c b/semi.c
+index d8b96ee..b5ec7d5 100644
+--- a/semi.c
++++ b/semi.c
+@@ -3,7 +3,7 @@
+  *   semiconductor tests and measurements
+  *
+  *   (c) 2012-2020 by Markus Reschke
+- *   based on code from Markus Frejek and Karl-Heinz Kübbeler
++ *   based on code from Markus Frejek and Karl-Heinz Kï¿½bbeler
+  *
+  * ************************************************************************ */
+ 
+@@ -68,7 +68,7 @@ void GetLeakageCurrent(uint8_t Mode)
+   ADC_PORT = Probes.Pin_1;         /* pull-up probe-1 directly */
+   U_Rl = ReadU_5ms(Probes.Ch_2);   /* get voltage at Rl */
+ 
+-  if (U_Rl > 3)          /* > 5µA */
++  if (U_Rl > 3)          /* > 5ï¿½A */
+   {
+     /* consider internal resistance of MCU */
+     R_Shunt = (uint32_t)NV.RiL;         /* in 0.1 Ohms */
+@@ -79,7 +79,7 @@ void GetLeakageCurrent(uint8_t Mode)
+       /*
+        *  for high currents take second measurement using RiL:
+        *  - only if high current mode is enabled
+-       *  - with 1mV ADC resolution we get down to 50µA
++       *  - with 1mV ADC resolution we get down to 50ï¿½A
+        *  - max. current is 5V/40Ohms = 125mA
+        *  - set probes: Gnd -- probe-2 / probe-1 -- Vcc
+        */
+@@ -93,7 +93,7 @@ void GetLeakageCurrent(uint8_t Mode)
+     {
+       /*
+        *  Rl:
+-       *  - with 1mV ADC resolution we get down to 1.4µA
++       *  - with 1mV ADC resolution we get down to 1.4ï¿½A
+        *  - max. current is 5V/720Ohms = 7mA
+        */
+ 
+@@ -101,12 +101,12 @@ void GetLeakageCurrent(uint8_t Mode)
+       R_Shunt += (R_LOW * 10);          /* in 0.1 Ohms */
+     }
+   }
+-  else                   /* < 5µA */
++  else                   /* < 5ï¿½A */
+   {
+     /*
+      *  For low currents we take a second measurement using Rh:
+      *  - with 1mV ADC resolution we get down to 2nA
+-     *  - max. current is 5V/470kOhms = 10µA
++     *  - max. current is 5V/470kOhms = 10ï¿½A
+      *  - set probes: Gnd -- Rh -- probe-2 / probe-1 -- Vcc
+      */
+ 
+@@ -207,7 +207,7 @@ void CheckDiode(void)
+    *  - intrinsic diode of a MOSFET or another component
+    *  - flyback diode of a BJT
+    *  - small resistor (< 3k) or inductor
+-   *  - capacitor (> around 22µF)
++   *  - capacitor (> around 22ï¿½F)
+    *
+    *  Solution:
+    *  - Vf of a diode rises with the current within some limits (about twice
+@@ -224,13 +224,13 @@ void CheckDiode(void)
+    *    U_Rh = U_Rl / (k - (k - 1) U_Rl / Vcc)
+    *    U_Rl = k U_Rh / (1 + (k - 1) U_Rh / Vcc) 
+    *  - Filter out caps by checking the voltage before and after measurement
+-   *    with Rh. In 15ms a 22µF cap would be charged from 0 to 7mV, a larger
++   *    with Rh. In 15ms a 22ï¿½F cap would be charged from 0 to 7mV, a larger
+    *    cap would have a lower voltage. We have also to consider other effects
+    *    which could increase the voltage.
+    *
+    *  Hints:
+    *  - Rl drives a current of about 7mA. That's not the best current for
+-   *    measuring Vf. The current for Rh is about 10.6µA.
++   *    measuring Vf. The current for Rh is about 10.6ï¿½A.
+    *    Most DMMs use 1mA.
+    */
+ 
+@@ -563,11 +563,11 @@ void GetGateThreshold(uint8_t Type)
+     /* add ADC reading */
+     if (Type & TYPE_N_CHANNEL)          /* n-channel */
+     {
+-      Ugs += ADCW;                        /* Ugs = U_g */
++      Ugs += ADC_RAW10;                   /* Ugs = U_g */
+     }
+     else                                /* p-channel */
+     {
+-      Ugs -= (1023 - ADCW);               /* Ugs = - (Vcc - U_g) */
++      Ugs -= (1023 - ADC_RAW10);          /* Ugs = - (Vcc - U_g) */
+     }
+   }
+ 
+@@ -678,10 +678,10 @@ uint32_t Get_hFE_C(uint8_t Type)
+   #ifdef SW_HFE_CURRENT
+   /* calculate emitter current: I_e = U_R_e / (Rl + Ri) */
+   /* NPN: Ri = RiL / PNP: Ri = RiH */
+-  I_e *= 10000;                    /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
++  I_e *= 10000;                    /* scale to 0.1 ï¿½V (for ï¿½A and Ri's 0.1 Ohms */
+   Ri += (R_LOW * 10);              /* Ri + Rl (in 0.1 Ohms) */
+   I_e /= Ri;                       /* / (Rl + Ri) */
+-  Semi.U_2 = (int16_t)I_e;         /* save I_e (in µA) */
++  Semi.U_2 = (int16_t)I_e;         /* save I_e (in ï¿½A) */
+   #endif
+ 
+ 
+@@ -690,7 +690,7 @@ uint32_t Get_hFE_C(uint8_t Type)
+    *  from Rl to Rh and measure again
+    */
+ 
+-  if (U_R_b <= 15)            /* I_b <= 21 µA */
++  if (U_R_b <= 15)            /* I_b <= 21 ï¿½A */
+   {
+     if (Type == TYPE_NPN)          /* NPN */
+     {
+@@ -743,9 +743,9 @@ uint32_t Get_hFE_C(uint8_t Type)
+       #ifdef SW_HFE_CURRENT
+       /* calculate emitter current: I_e = U_R_e / (Rl + Ri) */
+       /* NPN: Ri = RiL / PNP: Ri = RiH */
+-      I_e *= 10000;                /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
++      I_e *= 10000;                /* scale to 0.1 ï¿½V (for ï¿½A and Ri's 0.1 Ohms */
+       I_e /= Ri;                   /* / (Rl + Ri) */
+-      Semi.U_2 = (int16_t)I_e;     /* update I_e (in µA) */
++      Semi.U_2 = (int16_t)I_e;     /* update I_e (in ï¿½A) */
+       #endif
+     }
+   }
+@@ -815,9 +815,9 @@ uint32_t Get_hFE_C(uint8_t Type)
+   #ifdef SW_HFE_CURRENT
+   /* calculate emitter current: I_e = U_R_e / (Rl + Ri) */
+   /* NPN: Ri = RiL / PNP: Ri = RiH */
+-  I_e *= 10000;                    /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
++  I_e *= 10000;                    /* scale to 0.1 ï¿½V (for ï¿½A and Ri's 0.1 Ohms */
+   I_e /= Ri;                       /* / (Rl + Ri) */
+-  Semi.U_2 = (int16_t)I_e;         /* save I_e (in µA) */
++  Semi.U_2 = (int16_t)I_e;         /* save I_e (in ï¿½A) */
+   #endif
+ 
+   #endif
+@@ -859,7 +859,7 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
+ 
+   if (BJT_Type == TYPE_NPN)   /* NPN / n-channel */
+   {
+-    BJT_Level = 2557;         /* voltage across base resistor (5.44µA) */
++    BJT_Level = 2557;         /* voltage across base resistor (5.44ï¿½A) */
+     FET_Level = 3400;         /* voltage across drain resistor (4.8mA) */
+     FET_Type = TYPE_N_CHANNEL;
+ 
+@@ -886,7 +886,7 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
+   }
+   else                        /* PNP / p-channel */
+   {
+-    BJT_Level = 977;          /* voltage across base resistor (2.1µA) */
++    BJT_Level = 977;          /* voltage across base resistor (2.1ï¿½A) */
+     FET_Level = 2000;         /* voltage across drain resistor (2.8mA) */
+     FET_Type = TYPE_P_CHANNEL;
+ 
+@@ -990,7 +990,7 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
+     #ifdef SW_HFE_CURRENT
+     /* calculate collector current: I_c = U_R_c / (Rl + Ri) */
+     /* NPN: Ri = RiH / PNP: Ri = RiL */
+-    I_c *= 10000;                  /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
++    I_c *= 10000;                  /* scale to 0.1 ï¿½V (for ï¿½A and Ri's 0.1 Ohms */
+     I_c /= Ri;                     /* / (Rl + Ri) */
+     #endif
+ 
+@@ -1076,7 +1076,7 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
+       Semi.F_1 = hFE_E;                 /* hFE */
+       Semi.Flags = Flag;                /* hFE circuit type */
+       #ifdef SW_HFE_CURRENT
+-      Semi.U_3 = (int16_t)I_c;          /* I_c/I_e (in µA) */
++      Semi.U_3 = (int16_t)I_c;          /* I_c/I_e (in ï¿½A) */
+       #endif
+       Semi.C_value = Caps[0].Value;     /* B-E/E-B capacitance */
+       Semi.C_scale = Caps[0].Scale;
+@@ -1260,7 +1260,7 @@ void CheckDepletionModeFET(uint16_t U_Rl)
+    *  select detection offset based on U_Rl
+    */
+ 
+-  if (U_Rl > 490)         /* > 700µA (was 92mV/130µA) */
++  if (U_Rl > 490)         /* > 700ï¿½A (was 92mV/130ï¿½A) */
+   {
+     /*
+      *  Standard JFET or depletion mode MOSFET
+@@ -1271,10 +1271,10 @@ void CheckDepletionModeFET(uint16_t U_Rl)
+ 
+     Offset = 488;         /* 0.7mA */
+   }
+-  else                    /* > 21µA (15mV) */
++  else                    /* > 21ï¿½A (15mV) */
+   {
+     /* JFET with low I_DSS */
+-    Offset = 40;          /* 57µA */
++    Offset = 40;          /* 57ï¿½A */
+   }
+ 
+ 
+@@ -1637,9 +1637,9 @@ void CheckDepletionModeFET(uint16_t U_Rl)
+     }
+ 
+     /* I = U / R_sense */
+-    Semi.I_value = (uint32_t)U_1 * 10000;    /* U (0.1 µV) */
+-    Semi.I_value /= U_2;                     /* I = U / R (µA) */
+-    Semi.I_scale = -6;                       /* µA */
++    Semi.I_value = (uint32_t)U_1 * 10000;    /* U (0.1 ï¿½V) */
++    Semi.I_value /= U_2;                     /* I = U / R (ï¿½A) */
++    Semi.I_scale = -6;                       /* ï¿½A */
+ 
+ 
+     /*

@@ -1,0 +1,15 @@
+# build output
+firmware/build/
+*.o
+*.elf
+*.map
+
+# files copied from the installed lgt8fx Arduino core by tools/setup_lgt_tools.py
+tools/LGT_ID_READ/swd_lgt8fx8p.cpp
+tools/LGT_ID_READ/swd_lgt8fx8p.h
+tools/LarduinoISP_19200/LarduinoISP_19200.ino
+tools/LarduinoISP_19200/swd_lgt8fx8p.cpp
+tools/LarduinoISP_19200/swd_lgt8fx8p.h
+
+# avrdude backups / local notes
+*.bak

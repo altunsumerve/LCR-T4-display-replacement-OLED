@@ -1,0 +1,3 @@
+# keep the prebuilt image byte-identical (SHA-256 in README)
+*.hex binary
+*.pdf binary
