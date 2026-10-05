@@ -6,6 +6,8 @@ flex cable). Other clones may differ. Verify before you solder.
 
 ## Parts found on the board
 
+![Board back, annotated](img/board-back-annotated.jpg)
+
 | Ref | Marking | What it is | Notes |
 |---|---|---|---|
 | U1 | **erased** (LQFP-32) | **LGT8F328P** | Identified via SWD ID `3E A2 50 E9` (see below). Looks like an ATmega328P, but it isn't. |
@@ -55,6 +57,11 @@ of U3 (78L05). Find that leg with continuity to hole 5.
 
 ## Original LCD flex (P3) — which pad is which MCU pin
 
+![LCD flex pads on the front side](img/lcd-flex-pads-annotated.jpg)
+
+The pad numbers below were counted from one end of this row. The direction wasn't
+recorded, so re-check on your board with the pin finder before soldering.
+
 Found with `tools/LGT_PIN_FINDER`, which gives every PD pin a different average
 voltage, and a multimeter on DC volts. That way only big pads are probed, never
 the 0.5 mm-pitch legs. Pads numbered from one end of the row:
@@ -91,6 +98,8 @@ ZIF socket `123 1111`: the left three columns are probes 1, 2, 3. The four
 columns on the right are all probe 1 (extra holes for wide parts).
 
 ## New display: 0.96" SSD1306 I²C OLED
+
+<img src="img/oled-ssd1306-gm009605.jpg" width="240" alt="GM009605 OLED module"> <img src="img/finished-oled-in-case.jpg" width="330" alt="OLED installed">
 
 Module **GM009605** (blue, 4 pins `GND VDD SCK SDA`, Q1 regulator, R1/R2
 pull-ups, R3 = address 0x3C). It runs from 5 V and needs no series resistors.

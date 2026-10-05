@@ -4,6 +4,10 @@
 
 *Keywords: LCR-T4 display replacement / broken LCD / screen repair, transistor tester, component tester, M328, GM328, LGT8F328P, SSD1306 OLED, m-firmware, Arduino Uno programmer, LarduinoISP, SWD.*
 
+| Finished: OLED in the original case | ▶ Video of the whole repair (Turkish) |
+|---|---|
+| <img src="docs/img/finished-oled-in-case.jpg" width="330"> | [![LCR-T4 display replacement video](https://img.youtube.com/vi/Nj_T7Vg4zOc/hqdefault.jpg)](https://youtu.be/Nj_T7Vg4zOc) |
+
 Repair notes, firmware and tools for a cheap **LCR-T4 component tester**
 whose LCD broke. Under the sanded-off chip marking there was **no ATmega328P
 but an LGT8F328P** (read-protected). This repo documents how the board was
@@ -16,6 +20,9 @@ the original LCD.
 > broken display) or you accept losing the original.
 
 ## Does this apply to my tester?
+
+<img src="docs/img/broken-original-lcd.jpg" width="330" align="right" alt="broken original LCD">
+
 
 Likely, if your LCR-T4 has:
 
@@ -57,6 +64,8 @@ instead.
 | `tools/setup_lgt_tools.py` | Copies the SWD driver / LarduinoISP from your installed lgt8fx core |
 
 ## Quick facts
+
+![Board back with SWD header pinout](docs/img/board-back-annotated.jpg)
 
 **SWD header** (hole 1 = square pad … 5): `1 SWC` · `2 SWD` · `3 RESET` · `4 GND` · `5 VCC`
 → Uno `D13` · `D12` · `D10` · `GND` · `5V`

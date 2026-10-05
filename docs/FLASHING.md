@@ -30,6 +30,8 @@ monitor at 115200 baud:
 
 ## 3. Wiring
 
+![SWD header](img/board-back-annotated.jpg)
+
 Battery **out**. The Uno powers the tester.
 
 | Uno | LCR-T4 |

@@ -4,6 +4,10 @@
 
 *Anahtar kelimeler: LCR-T4 ekran değişimi, kırık ekran tamiri, transistör test cihazı, komponent test cihazı, LGT8F328P, OLED ekran, yazılım yükleme, Arduino Uno ile programlama.*
 
+| Bitmiş hâli: OLED orijinal kutusunda | ▶ Tamirin videosu |
+|---|---|
+| <img src="docs/img/finished-oled-in-case.jpg" width="330"> | [![LCR-T4 ekran değişimi videosu](https://img.youtube.com/vi/Nj_T7Vg4zOc/hqdefault.jpg)](https://youtu.be/Nj_T7Vg4zOc) |
+
 Ekranı kırılan ucuz bir **LCR-T4 bileşen test cihazının** onarım notları,
 yazılımı ve araçları. Yazısı zımparalanmış çipin altından **ATmega328P değil,
 LGT8F328P** çıktı, üstelik kilitliydi. Bu depo kartın nasıl tanındığını,
@@ -16,6 +20,9 @@ derlemesi de içeriyor.
 > (ör. ekranı kırıksa) ya da orijinal yazılımı kaybetmeyi göze alıyorsan yap.
 
 ## Benim cihazım da böyle mi?
+
+<img src="docs/img/broken-original-lcd.jpg" width="330" align="right" alt="kırık orijinal LCD">
+
 
 Büyük ihtimalle, eğer kartında:
 
@@ -39,6 +46,8 @@ Büyük ihtimalle, eğer kartında:
 | Transistör, diyot, bobin, ESR, pil ölçümü | ⚠️ sistemli denenmedi |
 
 ## Önemli bilgiler
+
+![Kartın arkası ve SWD girişinin pin sırası](docs/img/board-back-annotated.jpg)
 
 **SWD girişi** (1 = kare ped … 5): `1 SWC` · `2 SWD` · `3 RESET` · `4 GND` · `5 VCC`
 → Uno `D13` · `D12` · `D10` · `GND` · `5V`

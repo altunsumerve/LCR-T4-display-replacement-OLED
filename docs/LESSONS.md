@@ -1,5 +1,7 @@
 # Lessons learned — the traps, in the order we hit them
 
+Video of the whole process (Turkish): https://youtu.be/Nj_T7Vg4zOc
+
 This repair took one long day. Most of the time went into wrong
 assumptions. If your LCR-T4 behaves strangely, check these first.
 
