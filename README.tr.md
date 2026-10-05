@@ -55,6 +55,10 @@ Büyük ihtimalle, eğer kartında:
 **OLED** (SSD1306, I²C 0x3C): `SDA → PD1`, `SCK → PD2` (eski LCD şerit
 kablosunun 3. ve 5. lehimi, SWD girişine yakın uçtan sayınca), `VDD → 5 V`, `GND → GND`.
 
+| Eski LCD şerit kablo lehimleri, numaralı | OLED kabloları 3. ve 5. lehimde |
+|---|---|
+| <img src="docs/img/lcd-flex-pads-annotated.jpg" width="520"> | <img src="docs/img/oled-wires-on-flex-pads.jpg" width="300"> |
+
 **Eski LCD'nin kullandığı hatlar:** PD0 (RES), PD1 (A0), PD2 (SCL), PD4 (SI).
 PD3 ve PD5 ekrana bağlı değil.
 
