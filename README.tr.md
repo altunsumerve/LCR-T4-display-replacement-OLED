@@ -53,7 +53,7 @@ Büyük ihtimalle, eğer kartında:
 → Uno `D13` · `D12` · `D10` · `GND` · `5V`
 
 **OLED** (SSD1306, I²C 0x3C): `SDA → PD1`, `SCK → PD2` (eski LCD şerit
-kablosunun 3. ve 5. lehimi), `VDD → 5 V`, `GND → GND`.
+kablosunun 3. ve 5. lehimi, SWD girişine yakın uçtan sayınca), `VDD → 5 V`, `GND → GND`.
 
 **Eski LCD'nin kullandığı hatlar:** PD0 (RES), PD1 (A0), PD2 (SCL), PD4 (SI).
 PD3 ve PD5 ekrana bağlı değil.

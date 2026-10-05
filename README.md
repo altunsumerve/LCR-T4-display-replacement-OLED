@@ -71,7 +71,7 @@ instead.
 → Uno `D13` · `D12` · `D10` · `GND` · `5V`
 
 **OLED** (SSD1306, I²C 0x3C): `SDA → PD1`, `SCK → PD2` (pads 3 and 5 of the
-old LCD flex), `VDD → 5 V`, `GND → GND`.
+old LCD flex, counted from the end nearest the SWD header), `VDD → 5 V`, `GND → GND`.
 
 **Old LCD used** PD0 (RES), PD1 (A0), PD2 (SCL), PD4 (SI). PD3/PD5 are not
 connected to it.

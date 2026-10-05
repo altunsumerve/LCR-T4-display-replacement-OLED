@@ -59,8 +59,9 @@ of U3 (78L05). Find that leg with continuity to hole 5.
 
 ![LCD flex pads on the front side](img/lcd-flex-pads-annotated.jpg)
 
-The pad numbers below were counted from one end of this row. The direction wasn't
-recorded, so re-check on your board with the pin finder before soldering.
+Pads are counted from the end **nearest the 5-hole SWD header** (pad 1). The row
+has 14 pads; 13 were measured. Re-check on your own board with the pin finder
+before soldering.
 
 Found with `tools/LGT_PIN_FINDER`, which gives every PD pin a different average
 voltage, and a multimeter on DC volts. That way only big pads are probed, never
@@ -112,6 +113,10 @@ module.
 | VDD | hole 5 (VCC, +5 V) |
 | SDA | flex pad 3 (PD1) |
 | SCK | flex pad 5 (PD2) |
+
+<img src="img/oled-wires-on-flex-pads.jpg" width="420" alt="OLED SDA/SCK wires soldered on flex pads 3 and 5">
+
+*SDA and SCK wires soldered on pads 3 and 5, counted from the end nearest the SWD header.*
 
 The broken LCD was left connected on its flex and didn't disturb the I²C bus.
 If you see I²C problems, cut the old flex.

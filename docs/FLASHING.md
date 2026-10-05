@@ -32,6 +32,10 @@ monitor at 115200 baud:
 
 ![SWD header](img/board-back-annotated.jpg)
 
+<img src="img/swd-header-pins.jpg" width="360" alt="pin header soldered into the SWD holes">
+
+*Tip: a short pin header soldered into the 5 SWD holes makes repeated programming easy.*
+
 Battery **out**. The Uno powers the tester.
 
 | Uno | LCR-T4 |
